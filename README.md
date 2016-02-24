@@ -32,3 +32,23 @@ Deploy this war file to Tomcat (/webapps) and check:
 ```
 http://localhost:8080/sinatra-health/health
 ```
+
+##REST API
+
+Get urls as JSON array
+```
+GET /health/urls
+```
+
+Add a new URL to list
+```
+POST /health/urls
+{"url":"http://www.google.com"}
+```
+
+DELETE URL from the list
+```
+DELETE /health/urls
+{"url":"http://www.google.com"}
+```
+

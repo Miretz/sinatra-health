@@ -1,46 +1,65 @@
 require 'sinatra'
+require 'json'
 require 'net/http'
-require 'ostruct'
 
-urls = [
-	"http://localhost:8080/admin/health",
-	"http://localhost:8080/health2",
-	"http://localhost:8080/health3"
-]
+# GLOBAL VARS
+set :urls, ["http://localhost:8080/admin/health",
+            "http://localhost:8080/health2",
+            "http://localhost:8080/health3"]
 
-get '/health' do
-	status_code = 200
-	body_text = ""
-	urls.each do |url_string|
-		result = check_url(url_string)
-		if not result.status
-			status_code = 500
-			body_text += "Error: "
-		end
-		body_text += "#{url_string} <br/>"
-		body_text += "<pre>#{result.text}</pre><br/>"
-	end
-	status status_code
-	body body_text
+set :body_text, ""
+
+# RESOURCES
+get "/health" do
+  status_code = 200
+  settings.body_text = ""
+  settings.urls.each do |url_string|
+      unless check_url(url_string)
+          status_code = 500
+      end
+  end
+  status status_code
+  body settings.body_text
 end
 
-def check_url(url_string)
-	url = URI.parse(url_string)
-	req = Net::HTTP.new(url.host, url.port)
-	req.use_ssl = (url.scheme == 'https')
-	res = req.request_get(url.path)
-	result = OpenStruct.new
-	result.status = res.code == "200"
-	result.text = res.read_body
-	result
-rescue Errno::ENOENT
-	result = OpenStruct.new
-	result.status = false
-	result.text = "Can't find the server"
-	result
-rescue Errno::ECONNREFUSED
-	result = OpenStruct.new
-	result.status = false 
-	result.text = "Connection Refused"
-	result
+get "/health/urls" do
+  status 200
+  body settings.urls.to_json
+end
+
+post "/health/urls" do
+  request.body.rewind  # in case someone already read it
+  data = JSON.parse request.body.read
+  settings.urls.push "#{data['url']}"
+  status 200
+  body settings.urls.to_json
+end
+
+delete "/health/urls" do
+  request.body.rewind  # in case someone already read it
+  data = JSON.parse request.body.read
+  settings.urls.delete "#{data['url']}"
+  status 200
+  body settings.urls.to_json
+end
+
+# FUNCTIONS
+helpers do
+  def check_url(url_string)
+    url = URI.parse url_string
+    req = Net::HTTP.new(url.host, url.port)
+    req.use_ssl = (url.scheme == 'https')
+    path = url.path << '/' unless url.path.end_with?('/')
+    res = req.request_get(path)
+    settings.body_text << "Status #{res.code}" 
+    settings.body_text << "#{url_string}<br/>"
+    settings.body_text << "<pre>#{res.read_body}</pre><br/>"
+    res.code == "200"
+  rescue Errno::ENOENT
+    settings.body_text += "Can't find the server: #{url_string}<br/>"
+    false
+  rescue Errno::ECONNREFUSED
+    settings.body_text += "Connection Refused: #{url_string}<br/>"
+    false
+  end
 end
