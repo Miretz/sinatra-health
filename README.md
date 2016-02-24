@@ -33,6 +33,8 @@ Deploy this war file to Tomcat (/webapps) and check:
 http://localhost:8080/sinatra-health/health
 ```
 
+_Tested on Apache Tomcat 7.0.47 running on Java version 1.8.0_73_
+
 ##REST API
 
 Get urls as JSON array
@@ -51,4 +53,11 @@ DELETE URL from the list
 DELETE /health/urls
 {"url":"http://www.google.com"}
 ```
+
+##TODO
+* Templates
+* Persist list of URLs
+* Secure Rest API
+* Test War on other JavaEE servers & Java versions
+
 
