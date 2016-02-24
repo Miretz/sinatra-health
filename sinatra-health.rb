@@ -51,7 +51,7 @@ helpers do
     req.use_ssl = (url.scheme == 'https')
     path = url.path << '/' unless url.path.end_with?('/')
     res = req.request_get(path)
-    settings.body_text << "Status #{res.code}" 
+    settings.body_text << "Status #{res.code} " 
     settings.body_text << "#{url_string}<br/>"
     settings.body_text << "<pre>#{res.read_body}</pre><br/>"
     res.code == "200"
